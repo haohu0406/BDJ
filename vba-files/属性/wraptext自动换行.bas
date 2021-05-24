@@ -1,0 +1,1 @@
+Cells.WrapText = False '取消自动换行

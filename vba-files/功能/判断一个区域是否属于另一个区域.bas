@@ -1,0 +1,1 @@
+Application.Union(Target, Range("f5:f12")).Address <> Range("f5:f12").Address

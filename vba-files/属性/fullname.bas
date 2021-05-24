@@ -1,0 +1,1 @@
+ActiveWorkbook.FullName '当前窗口文件名与路径

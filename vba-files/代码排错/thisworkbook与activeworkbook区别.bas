@@ -1,0 +1,2 @@
+thisworkbook指当前VBA代码所处的Workbook,
+Activeworkbook指当前活跃的Workbook

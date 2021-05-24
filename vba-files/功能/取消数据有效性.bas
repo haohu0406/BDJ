@@ -1,0 +1,2 @@
+ActiveSheet.UsedRange.Validation.Delete
+取消活动工作表已使用范围的数据有效性

@@ -1,0 +1,1 @@
+[A1:A20].AdvancedFilter xlFilterCopy, [B1], Unique:=True '可去掉重复数据

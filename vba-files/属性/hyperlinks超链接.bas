@@ -1,0 +1,2 @@
+activesheet.hyperlinks.delete
+'删除活动工作表超链接
