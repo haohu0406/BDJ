@@ -1,0 +1,1 @@
+Sheets(sh_11).Range("a1").Resize(r, 3).borders.linestyle=xlcontinuous
