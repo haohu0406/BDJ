@@ -1,0 +1,71 @@
+
+Sub optex()
+    
+    Dim eapp As Object, i&, j&, erow&
+    Dim boResult As Boolean
+    Dim arr  '目标数组
+    Dim sfilepath As String, sfullpath As String
+    Dim pdarr(1 To 4, 1 To 1)
+    pdarr(1, 1) = ncwx: pdarr(2, 1) = pxwx: pdarr(3, 1) = ycwx: pdarr(4, 1) = xywx
+    sfilepath = Application.CurrentProject.Path
+    Dim aApp As Acrobat.AcroApp
+    Dim av_doc As Acrobat.AcroAVDoc
+    Dim pdf_doc As Acrobat.AcroPDDoc
+    Dim jso_obj As Object
+    Set eapp = CreateObject("Excel.Application")
+    Dim wb As Object
+    
+    Dim Process As Object
+    For Each Process In GetObject("winmgmts:").ExecQuery("select * from Win32_Process where name='Acrobat.EXE'")
+        Process.Terminate (0)
+    Next
+    
+    
+    Dim dfile As String 'destination file
+    Dim ext As String 'my choise of file
+    For i = 1 To 4
+        sfullpath = sfilepath & "\" & pdarr(i, 1) & ".pdf"
+        DoCmd.OutputTo acOutputReport, pdarr(i, 1), acFormatPDF, sfullpath, False, "", , 1
+        
+        ext = "XLSX"
+        
+        dfile = Replace(sfullpath, ".pdf", "." & ext, 1)
+        
+        Set aApp = CreateObject("AcroExch.App")
+        Set av_doc = CreateObject("AcroExch.AVDoc")
+        
+        If av_doc.Open(sfullpath, vbNull) = True Then
+            
+            Set pdf_doc = av_doc.GetPDDoc
+            Set jso_obj = pdf_doc.GetJSObject
+            
+            boResult = jso_obj.SaveAs(dfile, "com.adobe.acrobat.xlsx")
+            Set wb = eapp.Workbooks.Open(dfile, False, False)
+            With wb
+                eapp.Application.ScreenUpdating = False
+                eapp.Visible = True
+                erow = .sheets(1).Range("a65535").End(3).row
+                .sheets(1).Range("a1").HorizontalAlignment = 3
+                .sheets(1).Columns("A:l").EntireColumn.AutoFit
+                .sheets(1).Columns("A:l").Interior.Pattern = 0
+                For j = 3 To erow
+                    If .sheets(1).cells(j, 1) = "单位" Then
+                        .sheets(1).rows(j).Delete
+                    End If
+                Next j
+                eapp.Application.ScreenUpdating = True
+            End With
+            wb.Close
+            'jso_obj.SaveAs dfile, "com.adobe.acrobat." & ext
+            
+        End If
+    Next i
+    av_doc.Close False
+    
+    
+    aApp.Exit
+    Set eapp = Nothing
+    Set aApp = Nothing
+    Set av_doc = Nothing
+    
+End Sub

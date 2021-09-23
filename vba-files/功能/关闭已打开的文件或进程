@@ -1,0 +1,6 @@
+Sub 关闭已打开的文件或进程()
+    Dim Process As Object
+    For Each Process In GetObject("winmgmts:").ExecQuery("select * from Win32_Process where name='Acrobat.EXE'")
+        Process.Terminate (0) '关闭进程
+    Next
+End Sub
