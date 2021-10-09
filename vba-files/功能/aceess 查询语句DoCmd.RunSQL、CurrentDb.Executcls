@@ -1,0 +1,282 @@
+aceess 查询语句DoCmd.RunSQL、CurrentDb.Execute、CurrentProject.Connection.Execute
+
+来源:www.accessoft.com  点击数:275  评论数:1　评论 | 收藏 | 复制
+
+时　间:2019-01-29 15:00:11
+作　者:红尘如烟   ID：10768  城市：成都
+摘　要:统一VBA中SQL语句执行的方法DoCmd.RunSQL、CurrentDb.Execute、CurrentProject.Connection.Execute
+正　文:
+
+要在 Access 中用 VBA 中执行操作查询，在不创建查询对象的前提下，一般主要有3种方法：
+
+1. Access本身的方法：DoCmd.RunSQL strSQL
+2. DAO的方法：CurrentDb.Execute strSQL
+3. ADO的方法：CurrentProject.Connection.Execute strSQL
+
+DoCmd.RunSQL 方法
+
+DoCmd.RunSQL 方法是Access本身的方法，理论上它是首先方式，因为它有进度条，还会有确认消息框，在查询对象中使用的“Forms!窗体名!控件名”这样的变量它也能支持。但是当我们用代码去执行的时候，我们都很确定自己是要干什么的，所以这个时候完全不想让它显示确认消息框。那么就只好在执行前关闭确认消息框了，示例代码如下 ：
+
+DoCmd.SetWarnings False
+
+DoCmd.RunSQL strSQL
+
+DoCmd.SetWarnings True
+
+从上面的示例代码中我们可以看出，每次调用 DoCmd.RunSQL 之前，都要用 DoCmd.SetWarnings False 关闭系统确认消息框，执行完之后再用  DoCmd.SetWarnings True 恢复系统确认消息框。使用的地方多了，就显得非常繁琐。
+
+这里可能有童鞋会问，让系统确认消息框一直处于关闭状态，不就可以不用每次都关闭再开启这么麻烦了吗？理论上是可以这样干，但是，系统确认消息框不单是执行查询语句的时候用，它是全局性的，一直处于关闭状态，意味着如果你不小心误操作删除了某个表、查询、窗体、报表等，不会有提示，你修改设计发现不对想关闭不保存重新来过，没门儿，关闭时自动保存了，不会有确认提示。所以，我是强烈不建议你一直关闭系统确认消息框的。
+
+ 
+
+CurrentDb.Execute 方法
+
+相比来说 DAO 的 CurrentDb.Execute  不支持“Forms!窗体名!控件名”变量，功能上要比 DoCmd.RunSQL 弱很多，但是架不住它简单省事。没有任何提示消息框，代码也相对简短。于是它变成了很多人使用最多的方法了，
+
+ 
+
+CurrentProject.Connection.Execute 方法
+
+ADO 的 CurentProject.Connection.Execute 方法可能用得人就少了，无它，太长了，不够简短。用上一次两次还好，当你要几百几千次的使用时，不知道要多敲多少次键盘，而这种时候你会觉得多敲一个字符都累人。
+
+ 
+
+但是该方法有一点另外2种方法无法代替：使用SQL语句创建小数类型（decimal）的字段。只有 ADO 的这个方法能正确执行，用另外两种方式会报错：
+
+ 
+
+ 
+
+ 
+
+这是因为小数类型在早期的Access版本中是没有的，是后期版本才加入的，而DoCmd.RunSQL 和 CurrentDb.Execute 是Access一开始就有的东西，但这里又没有同样更新增加对小数类型的支持。而ADO则是DAO之后新一代的数据接口，它是出现在小数类型之后的，所以它可以支持小数类型。
+
+ 
+
+综合上面一些信息，我们可以得到这样一个对比结果：
+
+方法
+
+执行时不会有确认消息框
+
+生成表查询自动覆盖已有的表
+
+支持“Forms!窗体名!控件名”变量语法
+
+支持创建小数类型字段
+
+DoCmd.RunSQL
+
+否
+
+是
+
+是
+
+否
+
+CurrentDb.Execute
+
+是
+
+否
+
+否
+
+否
+
+CurrentProject.Connection.Execute
+
+是
+
+否
+
+否
+
+是
+
+ 
+
+通过上面的对比可以看出，3种方法各自都有其它方法无法代替的有用特性。于是在大写编写VBA代码时，3种方法夹杂使用，一会儿是 DoCmd.RunSQL strSQL， 一会儿又是 CurrentDb.Execute strSQL，看上去就显得很混乱无序。同时也容易给初学者造成困惑，增加学习难度，搞不清为什么一会儿用这个方法，一会儿用那个方法。
+
+对于这个问题，本公子思考了很久，面壁九九八十一日，终于悟得了此门混元神功。
+
+法门就是，创建一个通用的自定义函数，自动根据SQL语句，判断用哪种方法。这样就可以在所有执行SQL语句的地方，使用同一个方法，而不必为需要不停变脸而烦恼。
+
+函数源码如下：
+
+ 
+
+'========================================================================================
+
+'函数名称： ClientRunSQL
+
+'功能描述:  整合执行SQL语句的3种方法: DoCmd.RunSQL、CurrentDb.Execute
+
+'         CurrentProject.Connection.Execute，让代码统一标准化，使用更简单方便。
+
+'输入参数： SQLStatement 可以是单个SQL语句字串，也可以是包含多个SQL语句的数组或Collection集合。
+
+'返回参数：无
+
+'相关调用：
+
+'使用注意：
+
+'兼 容 性：
+
+'参考资料：
+
+'作　　者：红尘如烟
+
+'创建时间： 2018-12-21
+
+'========================================================================================
+
+Public Function ClientRunSQL _
+
+    ( _
+
+         ByVal SQLStatement As Variant _
+
+    )
+
+   
+
+    On Error GoTo ErrorHandler
+
+ 
+
+    If varType(SQLStatement) = vbString Then
+
+       SQLStatement = Array(SQLStatement)
+
+    End If
+
+   
+
+    Dim strExecutor As String
+
+   
+
+    Dim varItem As Variant
+
+    For Each varItem In SQLStatement
+
+       If varItem Like "*Select *INTO *FROM *" Then
+
+           strExecutor = "DoCmd"
+
+       ElseIf varItem Like "*Forms!*!*" Then
+
+           strExecutor = "DoCmd"
+
+       ElseIf varItem Like "* COLUMN * DECIMAL(*,*)*" Then
+
+           strExecutor = "ADO"
+
+       Else
+
+           strExecutor = "DAO"
+
+       End If
+
+    Next
+
+   
+
+    If strExecutor = "DoCmd" Then
+
+       DoCmd.SetWarnings False
+
+    End If
+
+ 
+
+    For Each varItem In SQLStatement
+
+       Select Case strExecutor
+
+       Case "DoCmd": ClientRunSQL CStr(varItem)
+
+       Case "DAO":   CurrentDb.Execute CStr(varItem)
+
+       Case "ADO":  CurrentProject.Connection.Execute CStr(varItem)
+
+       End Select
+
+    Next
+
+   
+
+    If strExecutor = "DoCmd" Then
+
+       DoCmd.SetWarnings True
+
+    End If
+
+   
+
+ExitHere:
+
+    Exit Function
+
+   
+
+ErrorHandler:
+
+    MsgBox Err.Description, vbCritical, "Error #" & Err
+
+    Resume ExitHere
+
+End Function
+
+ 
+
+ 
+
+'示例代码1: 执行单个语句
+
+Sub Test1()
+
+    ClientRunSQL "Delete FROM 表1"
+
+End Sub
+
+ 
+
+ 
+
+'示例代码2: 执行多个语句
+
+Sub Test2()
+
+    Dim colSQLs As New Collection
+
+    With colSQLs
+
+       .Add "Delete FROM 表1"
+
+       .Add "Delete FROM 表2"
+
+       .Add "Delete FROM 表3"
+
+       .Add "Delete FROM 表4"
+
+    End With
+
+    ClientRunSQL colSQLs
+
+    Set colSQLs = Nothing
+
+End Sub
+
+好了，少年，这本如来神掌……不好意思，拿错道具了……这本混元神功已经传授给你了。能不能修成正法，就看你的资质了！
+
+ 
+
+ 
+
+文末彩蛋：这里函数名为什么是 ClientRunSQL 呢？没错，你猜对了，那是因为另外还有一个 ServerRunSQL！但那又是另一个故事了。
+
+江湖路远，夜黑坑深，有缘再……啊！哪个缺德鬼又在这儿挖了一个坑！
