@@ -125,6 +125,7 @@ Public Function Getrst(ByVal strquery As String) As ADODB.Recordset
 Error_Getrst:
     MsgBox (Err.Description)
 End Function
+
 Function Trans(ByRef mrr)
     Dim i&, j&, nrr
     On Error Resume Next

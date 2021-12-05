@@ -1,0 +1,14 @@
+Public Function Getrst(ByVal strquery As String) As ADODB.Recordset
+    Dim objrst As New ADODB.Recordset
+    On Error GoTo Error_Getrst
+    objrst.Open strquery, CurrentProject.Connection
+    Set Getrst = objrst
+    Exit Function
+Error_Getrst:
+    MsgBox (Err.Description)
+End Function
+
+
+rst.Open sr, CurrentProject.Connection
+arr = rst.GetRows
+Trans arr
