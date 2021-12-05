@@ -1,0 +1,190 @@
+
+Sub optex()
+    
+    Dim eapp As Object, i&, j&, erow&
+    Dim boResult As Boolean
+    Dim arr  '目标数组
+    Dim sfilepath As String, sfullpath As String
+    Dim pdarr(1 To 4, 1 To 1)
+    pdarr(1, 1) = ncwx: pdarr(2, 1) = pxwx: pdarr(3, 1) = ycwx: pdarr(4, 1) = xywx
+    sfilepath = Application.CurrentProject.Path
+    Dim aApp As Acrobat.AcroApp
+    Dim av_doc As Acrobat.AcroAVDoc
+    Dim pdf_doc As Acrobat.AcroPDDoc
+    Dim jso_obj As Object
+    Set eapp = CreateObject("Excel.Application")
+    Dim wb As Object
+    
+    Dim Process As Object
+    For Each Process In GetObject("winmgmts:").ExecQuery("select * from Win32_Process where name='Acrobat.EXE'")
+        Process.Terminate (0)
+    Next
+    
+    
+    Dim dfile As String 'destination file
+    Dim ext As String 'my choise of file
+    For i = 1 To 4
+        sfullpath = sfilepath & "\" & pdarr(i, 1) & ".pdf"
+        DoCmd.OutputTo acOutputReport, pdarr(i, 1), acFormatPDF, sfullpath, False, "", , 1
+        
+        ext = "XLSX"
+        
+        dfile = Replace(sfullpath, ".pdf", "." & ext, 1)
+        
+        Set aApp = CreateObject("AcroExch.App")
+        Set av_doc = CreateObject("AcroExch.AVDoc")
+        
+        If av_doc.Open(sfullpath, vbNull) = True Then
+            
+            Set pdf_doc = av_doc.GetPDDoc
+            Set jso_obj = pdf_doc.GetJSObject
+            
+            boResult = jso_obj.SaveAs(dfile, "com.adobe.acrobat.xlsx")
+            Set wb = eapp.Workbooks.Open(dfile, False, False)
+            With wb
+                eapp.Application.ScreenUpdating = False
+                eapp.Visible = True
+                erow = .sheets(1).Range("a65535").End(3).row
+                .sheets(1).Range("a1").HorizontalAlignment = 3
+                .sheets(1).Columns("A:l").EntireColumn.AutoFit
+                .sheets(1).Columns("A:l").Interior.Pattern = 0
+                For j = 3 To erow
+                    If .sheets(1).cells(j, 1) = "单位" Then
+                        .sheets(1).rows(j).Delete
+                    End If
+                Next j
+                eapp.Application.ScreenUpdating = True
+            End With
+            wb.Close
+            'jso_obj.SaveAs dfile, "com.adobe.acrobat." & ext
+            
+        End If
+    Next i
+    av_doc.Close False
+    
+    
+    aApp.Exit
+    Set eapp = Nothing
+    Set aApp = Nothing
+    Set av_doc = Nothing
+    
+End Sub
+
+
+    Sub qoptex()
+        Dim eapp As Object, i&, j&, sr$, m&, n&, k&, arr_x&, arr_y&, exportpath$
+        Dim arr, crr(1 To 1, 1 To 20) '(1 to 2000,1 to 13)
+        Dim brr(1 To 300, 1 To 13), d As Object
+        Dim currentfilepath As String, sfullpath As String
+        Dim pdarr(1 To 4, 1 To 1)
+        Dim Process As Object
+        
+        
+        pdarr(1, 1) = ncwx: pdarr(2, 1) = pxwx: pdarr(3, 1) = ycwx: pdarr(4, 1) = xywx
+        
+        m = MsgBox("提示：此程序运行将关闭已打开excel程序，继续吗？", vbOKCancel, "导出excel表")
+        If Not m = 1 Then Exit Sub
+        DoCmd.OpenForm "ProgressBar"
+        
+        For Each Process In GetObject("winmgmts:").ExecQuery("select * from Win32_Process where name='Excel.EXE'")
+            Process.Terminate (0)
+        Next
+        loadingbar (2)
+        
+        Set Process = Nothing
+        currentfilepath = Application.CurrentProject.Path
+        Set eapp = CreateObject("Excel.Application")
+        Dim wb As Object
+        Dim rst As New ADODB.Recordset
+        Set d = CreateObject("scripting.dictionary")
+        loadingbar (1)
+        
+        For m = 1 To 4
+            sr = "select * from " & pdarr(m, 1)
+            rst.Open sr, CurrentProject.Connection
+            loadingbar (3)
+            arr = rst.GetRows
+            Trans arr
+            arr_y = UBound(arr, 2)
+            arr_x = UBound(arr)
+            k = 1
+            For j = 0 To rst.Fields.Count - 2
+                brr(k, j + 1) = rst.Fields(j).Name
+            Next j
+            loadingbar (1)
+            
+            For i = 0 To arr_x
+                d(arr(i, 0)) = i + 1
+                For j = 2 To arr_y
+                    sr = arr(i, 0) & "|" & brr(1, j + 1)
+                    arr(i, j) = IIf(IsNull(arr(i, j)), 0, arr(i, j))
+                    If Not d.exists(sr) Then
+                        d(sr) = arr(i, j)
+                    Else
+                        d(sr) = d(sr) + arr(i, j)
+                    End If
+                    crr(1, j + 1) = crr(1, j + 1) + arr(i, j)
+                Next j
+            Next i
+            loadingbar (2)
+            
+            For i = 0 To arr_x
+                n = d(arr(i, 0)): k = k + 1
+                If i + 1 = n Then
+                    For j = 1 To arr_y
+                        brr(k, j) = arr(i, j - 1)
+                    Next j
+                    k = k + 1: brr(k, 1) = arr(i, 0) & "小计"
+                    For j = 3 To arr_y
+                        brr(k, j) = d(arr(i, 0) & "|" & brr(1, j))
+                    Next j
+                Else
+                    For j = 1 To arr_y
+                        brr(k, j) = arr(i, j - 1)
+                    Next j
+                End If
+            Next i
+            k = k + 1: brr(k, 1) = "总计"
+            For j = 3 To arr_y
+                brr(k, j) = crr(1, j)
+                crr(1, j) = 0
+            Next j
+            loadingbar (4)
+    
+            Set arr = Nothing
+            sfullpath = currentfilepath & "\模版\" & pdarr(m, 1) & ".xlsx"
+            Set wb = eapp.workbooks.Open(sfullpath, False, False)
+            eapp.Application.screenupdating = False
+            eapp.Visible = False
+            loadingbar (1)
+            
+            With wb.sheets(1)
+                .Range(.Cells(1, 1), .Cells(1, arr_y)).merge
+                .Range("a1").HorizontalAlignment = 3
+                .Range("a2").Resize(k, arr_y) = brr
+                .UsedRange.Offset(1).Resize(k).Borders.LineStyle = xlContinuous
+                .Columns("A:N").EntireColumn.AutoFit
+                .Columns("A:N").Interior.Pattern = 0
+            End With
+            loadingbar (4)
+            'Set arr = Nothing
+            exportpath = storgepath & "\" & pdarr(m, 1) & ".xlsx"
+            wb.Saveas exportpath
+            loadingbar (9)
+            wb.Close
+            rst.Close
+            d.RemoveAll
+            
+        Next m
+        
+        
+        eapp.Application.screenupdating = True
+        Set eapp = Nothing
+        Set rst = Nothing
+        Set d = Nothing
+        Erase brr, crr
+        
+        DoCmd.Close acForm, "ProgressBar"
+        MsgBox "导出完成"
+        
+    End Sub
