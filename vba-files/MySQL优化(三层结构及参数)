@@ -1,0 +1,30 @@
+1、硬件层优化
+2、系统层优化
+3、mysql软件及版本选择
+4、mysql三层结构及参数优化
+5、mysql开发规范
+6、MySQL的索引优化
+7、mysql的事务及锁优化
+8、mysql架构优化
+9、MySQL安全优化
+
+
+
+4、mysql三层结构及参数优化
+    4.1连接层
+        max_connections=1000
+        max_connect_errors=999999
+        wait_timeout=600
+        ....
+        设置连接并发数（连接数）等
+    4.2server层
+        sql_safe_updates=1
+        update等语句必须加where条件，且where条件必须有索引
+        sort_buffer=8M
+        join_buffer=8M
+    4.3存储引擎层
+        日志文件大小等innodb引擎设置等
+    4.4复制
+        io分开
+    4.5其他
+https://www.bilibili.com/video/BV12x4y1Q7wv/?p=6&spm_id_from=333.1007.top_right_bar_window_history.content.click&vd_source=51227d3f3e7fc57e6f66724db771ca91
