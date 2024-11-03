@@ -1,0 +1,34 @@
+with 公用表表名 as(SELECT * from 表1)
+--通过使用CTE，我们避免了在原始查询中多次出现的类似子查询
+--CTE使查询更加清晰，并且MySQL优化器可以更好地处理它们
+
+--实际应用的例子
+WITH -- 计算本年车流的 CTE
+current_year_traffic AS (
+	SELECT
+		STR_TO_DATE( DATE_FORMAT(门架车流.日期, '%y-%m-01' ), '%y-%m-%d' ) AS 日期,
+		门架车流.门架,
+		ROUND( SUM(门架车流.数量 ) / 10000, 2 ) AS 车流 
+	FROM
+		门架车流 
+	GROUP BY
+		STR_TO_DATE( DATE_FORMAT(门架车流.日期, '%y-%m-01' ), '%y-%m-%d' ),
+		门架车流.门架 -- 可以添加索引提示来进一步优化性能，如果适用的话
+-- USE INDEX (索引名)
+		
+	),-- 计算上年车流的 CTE
+	previous_year_traffic AS ( SELECT current_year_traffic.日期, current_year_traffic.门架, current_year_traffic.车流 FROM current_year_traffic -- 同样可以添加索引提示来优化性能
+	) -- 主查询，连接两个 CTE
+SELECT
+	A.日期,
+	路段门架.路段,
+	A.门架,
+	A.车流 本年车流,
+	B.车流 上年车流 
+FROM
+	current_year_traffic AS A
+	INNER JOIN 路段门架 ON 路段门架.门架 = A.门架
+	LEFT JOIN previous_year_traffic AS B ON DATE_SUB( A.日期, INTERVAL 1 YEAR ) = B.日期 
+	AND A.门架 = B.门架 
+WHERE
+	B.车流 IS NOT NULL

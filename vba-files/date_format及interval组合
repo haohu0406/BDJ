@@ -1,0 +1,5 @@
+select DATE_FORMAT('2024-01-31','%y-%m-%d') + interval 1 day
+--执行结果为2024-02-01，加一天
+select DATE_FORMAT('2024-01-31','%y-%m') + interval 1 day
+--执行结果为空
+--虽然date_format返回的是字符串，但可以作为时间进行运算

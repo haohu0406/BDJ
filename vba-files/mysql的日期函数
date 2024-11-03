@@ -1,0 +1,105 @@
+MySQL 提供了丰富的日期和时间函数，用于处理和操作日期、时间以及日期时间值。以下是一些常用的日期和时间函数：
+
+‌CURDATE() 和 CURRENT_DATE()‌：
+
+返回当前日期，格式为 YYYY-MM-DD。
+‌CURTIME() 和 CURRENT_TIME()‌：
+
+返回当前时间，格式为 HH:MM:SS。
+‌NOW() 和 CURRENT_TIMESTAMP()‌：
+
+返回当前日期和时间，格式为 YYYY-MM-DD HH:MM:SS。
+‌UTC_DATE()‌：
+
+返回当前 UTC 日期。
+‌UTC_TIME()‌：
+
+返回当前 UTC 时间。
+‌UTC_TIMESTAMP()‌：
+
+返回当前 UTC 日期和时间。
+‌DATE()‌：
+
+从日期时间值中提取日期部分。
+‌TIME()‌：
+
+从日期时间值中提取时间部分。
+‌YEAR()‌：
+
+从日期值中提取年份。
+‌MONTH()‌：
+
+从日期值中提取月份。
+‌DAY()‌：
+
+从日期值中提取日。
+‌HOUR()‌：
+
+从时间或日期时间值中提取小时。
+‌MINUTE()‌：
+
+从时间或日期时间值中提取分钟。
+‌SECOND()‌：
+
+从时间或日期时间值中提取秒。
+‌DATE_ADD() 和 ADDDATE()‌：
+SELECT DATE_ADD('2023-10-01', INTERVAL 5 DAY) AS new_date;
+这个查询将返回 2023-10-06，表示在 2023-10-01 的基础上添加了 5 天
+
+给日期添加指定的时间间隔，返回新的日期。
+‌DATE_SUB() 和 SUBDATE()‌：
+SELECT DATE_SUB('2023-10-01', INTERVAL 5 DAY) AS new_date;
+这个查询将返回 2023-09-26，表示在 2023-10-01 的基础上减去了 5 天。
+
+从日期中减去指定的时间间隔，返回新的日期。
+‌DATEDIFF()‌：
+
+比较两个日期，返回它们之间的天数差。
+‌TIMESTAMPDIFF()‌：
+
+比较两个日期时间值，根据指定单位返回它们之间的差。
+‌TIMESTAMP()‌：
+
+以数字形式返回当前的 Unix 时间戳。
+‌FROM_UNIXTIME()‌：
+
+将 Unix 时间戳转换为日期时间格式。
+‌UNIX_TIMESTAMP()‌：
+
+将日期时间值转换为 Unix 时间戳。
+‌WEEK()‌：
+
+返回日期所在的周数。
+‌DAYOFWEEK()‌：
+
+返回日期是星期几，1 表示星期日，2 表示星期一，依此类推。
+‌DAYOFMONTH()‌：
+
+返回日期所在月份的天数。
+‌DAYOFYEAR()‌：
+
+返回日期所在年份的天数。
+‌WEEKDAY()‌：
+
+返回日期是星期几，0 表示星期一，1 表示星期二，依此类推，6 表示星期日。
+‌MONTHNAME()‌：
+
+返回月份的名称。
+‌DAYNAME()‌：
+
+返回星期几的名称。
+‌QUARTER()‌：
+
+返回日期所在的季度。
+‌STR_TO_DATE()‌：
+
+将字符串转换为日期时间值。
+‌DATE_FORMAT()‌：
+
+使用指定格式格式化日期时间值。
+
+mysql 当月最后一天
+SELECT LAST_DAY(CURDATE()) AS LastDayOfCurrentMonth;
+
+mysql 当月第一天
+SELECT DATE_FORMAT(CURDATE(), '%Y-%m-01') AS first_day_of_month;
